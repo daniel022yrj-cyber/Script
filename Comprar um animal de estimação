@@ -1,0 +1,56 @@
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local comprarPet = Instance.new("RemoteFunction")
+comprarPet.Name = "ComprarPet"
+comprarPet.Parent = ReplicatedStorage
+
+local pets = {
+    Cachorro = 100,
+    Gato = 150,
+    Dragao = 500
+}
+
+local inventarios = {}
+
+Players.PlayerAdded:Connect(function(player)
+    local leaderstats = Instance.new("Folder")
+    leaderstats.Name = "leaderstats"
+    leaderstats.Parent = player
+
+    local moedas = Instance.new("IntValue")
+    moedas.Name = "Moedas"
+    moedas.Value = 1000
+    moedas.Parent = leaderstats
+
+    inventarios[player.UserId] = {}
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    inventarios[player.UserId] = nil
+end)
+
+comprarPet.OnServerInvoke = function(player, nomePet)
+    local preco = pets[nomePet]
+
+    if not preco then
+        return false, "Pet inválido!"
+    end
+
+    local moedas = player:FindFirstChild("leaderstats")
+        and player.leaderstats:FindFirstChild("Moedas")
+
+    if not moedas then
+        return false, "Moedas não encontradas!"
+    end
+
+    if moedas.Value < preco then
+        return false, "Moedas insuficientes!"
+    end
+
+    moedas.Value -= preco
+    table.insert(inventarios[player.UserId], nomePet)
+
+    return true, "Você comprou: " .. nomePet
+end
